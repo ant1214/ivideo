@@ -1,0 +1,170 @@
+-- =============================================
+-- iVideo 项目数据库
+-- =============================================
+
+-- 1. 创建视频表（核心表）
+CREATE TABLE IF NOT EXISTS videos (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  video_url TEXT NOT NULL,
+  thumbnail_url TEXT, 
+  duration INTEGER, -- 视频时长（秒）
+  views_count INTEGER DEFAULT 0,
+  is_featured BOOLEAN DEFAULT FALSE,
+  video_type VARCHAR(20) DEFAULT '电影' CHECK (
+     video_type IN ('电影', '电视剧', '动漫', '综艺', '纪录片')
+  ),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE videos DROP CONSTRAINT IF EXISTS videos_video_type_check;
+
+ALTER TABLE videos ADD CONSTRAINT videos_video_type_check 
+CHECK (video_type IN ('电影', '电视剧', '动漫', '综艺', '纪录片', '其他'));
+-- 2. 创建标签表
+CREATE TABLE IF NOT EXISTS tags (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(50) NOT NULL UNIQUE,
+  color VARCHAR(7) DEFAULT '#666666',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- 3. 创建视频标签关联表（多对多关系）
+CREATE TABLE IF NOT EXISTS video_tags (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
+  tag_id UUID REFERENCES tags(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(video_id, tag_id) -- 防止重复关联
+);
+
+-- 4. 创建收藏表
+CREATE TABLE IF NOT EXISTS favorites (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id, video_id) -- 用户不能重复收藏同一个视频
+);
+
+-- 5. 创建观看历史表
+CREATE TABLE IF NOT EXISTS watch_history (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  video_id UUID REFERENCES videos(id) ON DELETE CASCADE,
+  watched_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  progress INTEGER DEFAULT 0, -- 观看进度（秒）
+  duration INTEGER DEFAULT 0, -- 视频总时长（秒）
+  UNIQUE(user_id, video_id) -- 每个视频只保留一条最新记录
+);
+
+-- =============================================
+-- 启用行级安全 (RLS)
+-- =============================================
+
+ALTER TABLE videos ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE video_tags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
+ALTER TABLE watch_history ENABLE ROW LEVEL SECURITY;
+
+-- =============================================
+-- 创建安全策略
+-- =============================================
+
+-- 视频表策略：任何人都可以查看视频
+CREATE POLICY "任何人都可以查看视频" ON videos FOR SELECT USING (true);
+
+-- 标签表策略：任何人都可以查看标签
+CREATE POLICY "任何人都可以查看标签" ON tags FOR SELECT USING (true);
+
+-- 视频标签策略：任何人都可以查看关联
+CREATE POLICY "任何人都可以查看视频标签关联" ON video_tags FOR SELECT USING (true);
+
+-- 收藏表策略：用户只能操作自己的收藏
+CREATE POLICY "用户可以查看自己的收藏" ON favorites FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "用户可以添加收藏" ON favorites FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "用户可以取消收藏" ON favorites FOR DELETE USING (auth.uid() = user_id);
+
+-- 观看历史策略：用户只能操作自己的历史
+CREATE POLICY "用户可以查看自己的观看历史" ON watch_history FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "用户可以添加观看历史" ON watch_history FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "用户可以更新观看历史" ON watch_history FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "用户可以删除观看历史" ON watch_history FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "允许认证用户更新视频" ON videos
+FOR UPDATE USING (auth.role() = 'authenticated');
+
+-- 插入常用标签
+INSERT INTO tags (name, color) VALUES
+('爱情', '#FF6B6B'),
+('仙侠', '#4ECDC4'),
+('古装', '#45B7D1'),
+('科幻', '#96CEB4'),
+('悬疑', '#FFEAA7'),
+('喜剧', '#DDA0DD'),
+('动作', '#FFA07A'),
+('奇幻', '#98D8C8'),
+('都市', '#F7DC6F'),
+('历史', '#BB8FCE'),
+('武侠', '#85C1E9'),
+('犯罪', '#F8C471'),
+('动画', '#82E0AA'),
+('战争', '#E59866'),
+('恐怖', '#C39BD3'),
+('综艺', '#F9E79F'),
+('纪录片', '#AED6F1'),
+('音乐', '#ABEBC6'),
+('游戏', '#FAD7A0'),
+('体育', '#D7BDE2')
+ON CONFLICT (name) DO NOTHING; -- 如果标签已存在则忽略
+
+
+-- =============================================
+-- 创建索引优化查询性能
+-- =============================================
+
+-- 视频表索引
+CREATE INDEX IF NOT EXISTS idx_videos_created_at ON videos(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_views_count ON videos(views_count DESC);
+CREATE INDEX IF NOT EXISTS idx_videos_is_featured ON videos(is_featured) WHERE is_featured = true;
+
+-- 收藏表索引
+CREATE INDEX IF NOT EXISTS idx_favorites_user_id ON favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_video_id ON favorites(video_id);
+
+-- 观看历史索引
+CREATE INDEX IF NOT EXISTS idx_watch_history_user_id ON watch_history(user_id);
+CREATE INDEX IF NOT EXISTS idx_watch_history_watched_at ON watch_history(watched_at DESC);
+
+-- 视频标签索引
+CREATE INDEX IF NOT EXISTS idx_video_tags_video_id ON video_tags(video_id);
+CREATE INDEX IF NOT EXISTS idx_video_tags_tag_id ON video_tags(tag_id);
+
+
+SELECT 
+  t.table_name,
+  pg_size_pretty(pg_total_relation_size('"' || t.table_name || '"')) AS size,
+  (xpath('/row/cnt/text()', query_to_xml(format('SELECT COUNT(*) AS cnt FROM %I.%I', t.table_schema, t.table_name), false, true, '')))[1]::text::int AS row_count
+FROM 
+  information_schema.tables t
+WHERE 
+  t.table_schema = 'public'
+  AND t.table_name IN ('videos', 'tags', 'video_tags', 'favorites', 'watch_history')
+ORDER BY 
+  t.table_name;
+
+  -- 创建增加观看次数的函数
+CREATE OR REPLACE FUNCTION increment_views(video_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  UPDATE videos 
+  SET views_count = views_count + 1,
+      updated_at = NOW()
+  WHERE id = video_id;
+END;
+$$;

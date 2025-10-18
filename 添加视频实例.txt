@@ -1,0 +1,202 @@
+INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+VALUES (
+  '【14-5、React前端：管理后台的构建与部署】', 
+  '关于React前端管理后台构建与部署的教程视频', 
+  'https://www.bilibili.com/video/BV1BzhkzyELg/', 
+  'https://i1.hdslb.com/bfs/archive/99f9b0654ae70a2d8d8ae209e0656f0b7d1944d6.jpg', 
+  55, 
+  '其他', 
+  true
+);
+
+SELECT id FROM videos 
+WHERE title = '【14-5、React前端：管理后台的构建与部署】' 
+AND video_url = 'https://www.bilibili.com/video/BV1BzhkzyELg/';
+
+INSERT INTO tags (name, color) 
+VALUES 
+  ('科技', '#00BFFF'),       -- 科技蓝（可自定义其他颜色）
+  ('生活', '#FFA07A')       -- 生活橙（可自定义其他颜色）
+ON CONFLICT (name) DO UPDATE SET color = EXCLUDED.color; -- 如果标签已存在，更新颜色
+
+-- 通过标签名关联
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  'd877350b-cc8d-4ee2-ae19-880ac83ed5f9', 
+  id 
+FROM tags 
+WHERE name IN ('科技');
+
+
+-- 查询视频及其关联的标签详情
+SELECT 
+  v.title AS video_title,
+  t.name AS tag_name,
+  t.color AS tag_color
+FROM videos v
+LEFT JOIN video_tags vt ON v.id = vt.video_id
+LEFT JOIN tags t ON vt.tag_id = t.id
+WHERE v.id = 'd877350b-cc8d-4ee2-ae19-880ac83ed5f9';
+
+INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+VALUES (
+  '函数基础！一课搞定', 
+  '数学教学视频', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/222.mp4', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/22.jpg', 
+  32, 
+  '纪录片', 
+  false
+);
+
+SELECT id FROM videos 
+WHERE title = '函数基础！一课搞定' 
+AND video_url =   'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/222.mp4';
+
+
+-- 通过标签名关联
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  'b626da00-cc4c-49a1-a25e-314e61ca635f', 
+  id 
+FROM tags 
+WHERE name IN ('奇幻','纪录片','科技');
+
+INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+VALUES (
+  '秘制日式咖喱饭', 
+  '很好吃的咖喱饭', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/333.mp4', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/33.jpg', 
+  80, 
+  '综艺', 
+  false
+);
+
+SELECT id FROM videos 
+WHERE title = '秘制日式咖喱饭' 
+AND video_url =   'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/333.mp4';
+
+
+-- 通过标签名关联
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  'ea86fc25-ab26-47c8-9a85-ec9a59432e43', 
+  id 
+FROM tags 
+WHERE name IN ('爱情','都市','综艺');
+
+INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+VALUES (
+  '风景视频', 
+  '一些风景', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/444.mp4', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/44.jpg', 
+  44, 
+  '电影', 
+  false
+);
+
+SELECT id FROM videos 
+WHERE title = '风景视频' 
+AND video_url =   'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/444.mp4';
+
+
+-- 通过标签名关联
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  '2d407890-488e-43fd-8bf5-e18975a1cfee', 
+  id 
+FROM tags 
+WHERE name IN ('体育','动作','音乐');
+
+INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+VALUES (
+  '非自然死亡', 
+  '非自然死亡第一集', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/555.mp4', 
+  'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/55.jpg', 
+  48, 
+  '电视剧', 
+  false
+);
+
+SELECT id FROM videos 
+WHERE title = '非自然死亡' 
+AND video_url =   'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/555.mp4';
+
+
+-- 通过标签名关联
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  '6fee3a56-8af8-4e42-9750-f70bd930078d', 
+  id 
+FROM tags 
+WHERE name IN ('爱情','都市','悬疑');
+
+
+-- 先插入视频并获取ID
+WITH new_video AS (
+  INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+  VALUES (
+    '幸运星', 
+    '幸运星第一集', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/666.mp4', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/66.jpg', 
+    48, 
+    '动漫', 
+    false
+  )
+  RETURNING id
+)
+-- 直接使用返回的ID关联标签
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  (SELECT id FROM new_video), 
+  id 
+FROM tags 
+WHERE name IN ('爱情','游戏','喜剧');
+
+
+WITH new_video AS (
+  INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+  VALUES (
+    '幸运星', 
+    '幸运星第二集', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/777.mp4', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/77.jpg', 
+    46, 
+    '动漫', 
+    false
+  )
+  RETURNING id
+)
+-- 直接使用返回的ID关联标签
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  (SELECT id FROM new_video), 
+  id 
+FROM tags 
+WHERE name IN ('都市','游戏','喜剧');
+
+
+WITH new_video AS (
+  INSERT INTO videos (title, description, video_url, thumbnail_url, duration, video_type, is_featured)
+  VALUES (
+    '幸运星', 
+    '幸运星第三集', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/videos/888.mp4', 
+    'https://trbiuadvichcmfgxhocb.supabase.co/storage/v1/object/public/thumbnails/88.jpg', 
+    55, 
+    '动漫', 
+    false
+  )
+  RETURNING id
+)
+-- 直接使用返回的ID关联标签
+INSERT INTO video_tags (video_id, tag_id)
+SELECT 
+  (SELECT id FROM new_video), 
+  id 
+FROM tags 
+WHERE name IN ('体育','动作','喜剧');
