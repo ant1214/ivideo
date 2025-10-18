@@ -38,7 +38,8 @@ class _RegisterPageState extends State<RegisterPage> {
         _emailController.text.trim(),
         _passwordController.text,
       );
-      
+      await AuthService.signOut();
+      print('🔒 注册后已强制登出');
       Navigator.pop(context);
       
       ScaffoldMessenger.of(context).showSnackBar(
