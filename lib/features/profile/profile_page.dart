@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:ivideo/core/providers/auth_provider.dart';
 import 'package:ivideo/shared/models/video_model.dart';
 import 'package:ivideo/shared/widgets/video_card.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -386,13 +387,7 @@ class _ProfilePageState extends State<ProfilePage> {
           itemCount: favoriteVideos.length,
           itemBuilder: (context, index) {
             final video = favoriteVideos[index];
-            return VideoCard(
-              video: video,
-              onTap: () {
-                // 添加点击处理
-                print('点击收藏视频: ${video.title}');
-              },
-            );
+            return VideoCard(video: video);
           },
         );
       },
@@ -479,7 +474,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 itemCount: historyVideos.length,
                 itemBuilder: (context, index) {
                   final video = historyVideos[index];
-                  return VideoCard(video: video, onTap: () {  },);
+                  return VideoCard(video: video);
                 },
               ),
             ),
@@ -620,6 +615,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   void _logout() async {
+    await SharedPreferences.getInstance().then((prefs) => prefs.setBool('hide_welcome_banner', false));
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     await authProvider.logout();
     Navigator.pop(context);
